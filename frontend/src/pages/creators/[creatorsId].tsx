@@ -1,0 +1,144 @@
+import { mdiChartTimelineVariant, mdiUpload } from '@mdi/js'
+import Head from 'next/head'
+import React, { ReactElement, useEffect, useState } from 'react'
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import dayjs from "dayjs";
+
+import CardBox from '../../components/CardBox'
+import LayoutAuthenticated from '../../layouts/Authenticated'
+import SectionMain from '../../components/SectionMain'
+import SectionTitleLineWithButton from '../../components/SectionTitleLineWithButton'
+import { getPageTitle } from '../../config'
+
+import { Field, Form, Formik } from 'formik'
+import FormField from '../../components/FormField'
+import BaseDivider from '../../components/BaseDivider'
+import BaseButtons from '../../components/BaseButtons'
+import BaseButton from '../../components/BaseButton'
+import FormCheckRadio from '../../components/FormCheckRadio'
+import FormCheckRadioGroup from '../../components/FormCheckRadioGroup'
+import { SelectField } from "../../components/SelectField";
+import { SelectFieldMany } from "../../components/SelectFieldMany";
+import { SwitchField } from '../../components/SwitchField'
+import {RichTextField} from "../../components/RichTextField";
+
+import { update, fetch } from '../../stores/creators/creatorsSlice'
+import { useAppDispatch, useAppSelector } from '../../stores/hooks'
+import { useRouter } from 'next/router'
+
+const EditCreators = () => {
+  const router = useRouter()
+  const dispatch = useAppDispatch()
+  const initVals = {
+
+    user: null,
+
+    profile_description: '',
+
+    'total_tipped': '',
+
+  }
+  const [initialValues, setInitialValues] = useState(initVals)
+
+  const { creators } = useAppSelector((state) => state.creators)
+
+  const { creatorsId } = router.query
+
+  useEffect(() => {
+    dispatch(fetch({ id: creatorsId }))
+  }, [creatorsId])
+
+  useEffect(() => {
+    if (typeof creators === 'object') {
+      setInitialValues(creators)
+    }
+  }, [creators])
+
+  useEffect(() => {
+      if (typeof creators === 'object') {
+
+          const newInitialVal = {...initVals};
+
+          Object.keys(initVals).forEach(el => newInitialVal[el] = (creators)[el])
+
+          setInitialValues(newInitialVal);
+      }
+  }, [creators])
+
+  const handleSubmit = async (data) => {
+    await dispatch(update({ id: creatorsId, data }))
+    await router.push('/creators/creators-list')
+  }
+
+  return (
+    <>
+      <Head>
+        <title>{getPageTitle('Edit creators')}</title>
+      </Head>
+      <SectionMain>
+        <SectionTitleLineWithButton icon={mdiChartTimelineVariant} title={'Edit creators'} main>
+        {''}
+        </SectionTitleLineWithButton>
+        <CardBox>
+          <Formik
+            enableReinitialize
+            initialValues={initialValues}
+            onSubmit={(values) => handleSubmit(values)}
+          >
+            <Form>
+
+    <FormField label='User' labelFor='user'>
+        <Field
+            name='user'
+            id='user'
+            component={SelectField}
+            options={initialValues.user}
+            itemRef={'users'}
+
+            showField={'firstName'}
+
+        ></Field>
+    </FormField>
+
+    <FormField label='ProfileDescription' hasTextareaHeight>
+        <Field
+            name='profile_description'
+            id='profile_description'
+            component={RichTextField}
+        ></Field>
+    </FormField>
+
+    <FormField
+        label="TotalTippedAmount"
+    >
+        <Field
+            type="number"
+            name="total_tipped"
+            placeholder="TotalTippedAmount"
+        />
+    </FormField>
+
+              <BaseDivider />
+              <BaseButtons>
+                <BaseButton type="submit" color="info" label="Submit" />
+                <BaseButton type="reset" color="info" outline label="Reset" />
+                <BaseButton type='reset' color='danger' outline label='Cancel' onClick={() => router.push('/creators/creators-list')}/>
+              </BaseButtons>
+            </Form>
+          </Formik>
+        </CardBox>
+      </SectionMain>
+    </>
+  )
+}
+
+EditCreators.getLayout = function getLayout(page: ReactElement) {
+  return (
+      <LayoutAuthenticated>
+          {page}
+      </LayoutAuthenticated>
+  )
+}
+
+export default EditCreators
